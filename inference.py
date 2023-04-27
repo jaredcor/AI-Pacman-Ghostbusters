@@ -65,10 +65,17 @@ class DiscreteDistribution(dict):
         "*** CS3368 YOUR CODE HERE ***"
         " you should normalize variable self. Remember that to normalize you can divide"
         "by the sum. "
-        # raiseNotDefined()
-        return float(self/self.total())
+        # Use the total method to find the sum of the values in the distribution.
+        total = float(self.total())
         
+        # In the case where the total value of the distribution is 0, do nothing.
+        if total == 0: 
+            return
         
+        # Note that this method modifies the distribution directly, rather than 
+        # returning a new distribution (no return).
+        for k in self.keys():
+            self[k] = self[k] / total
 
     def sample(self):
         """
@@ -165,15 +172,34 @@ class InferenceModule:
         """
         "*** CS3368 YOUR CODE HERE ***"
         """
-        here is a procesure for you 
+        here is a procedure for you 
             if noisyDistance is none, special case check the project discription (should return something)
             if ghost is in jail position, special case check the project discription (should return something)
             use manhatten distance to estimate the distance (actual)
             use busters.getObservationProbability to estimate the noisy distance
             return that noisy distance 
         """
+        # If ghost is in jail position, special case:
+        if ghostPosition == jailPosition: 
+            # If the distance reading is None, 
+            # then the ghost is in jail with probability 1
+            if noisyDistance == None:
+                return 1.0
+            
+            # if the distance reading is not None, then 
+            # the ghost is in jail with probability 0.
+            else:
+                return 0.0
+            
+        if noisyDistance == None:
+            return 0.0
         
-        raiseNotDefined()
+        # Use manhattanDistance() to estimate the distance (actual)
+        actualDistance = manhattanDistance(pacmanPosition, ghostPosition)
+        
+        # Use busters.getObservationProbability() to estimate the noisy distance,
+        # return that noisy distance 
+        return busters.getObservationProbability(noisyDistance, actualDistance)  
 
     def setGhostPosition(self, gameState, ghostPosition, index):
         """
@@ -284,14 +310,33 @@ class ExactInference(InferenceModule):
         '''
         procedure:
         1- get pacman position
-        2- get jail posisition
+        2- get jail position
         3- get the current belief
         4- loop over all positions to 
             4.1. get the probability of noisy position given the actual (q1 implimentation is needed here)
             4.2. update the belief of that position
         5- normalize 
         '''
-        raiseNotDefined()
+        # Get pacman and jail position
+        pacmanPos = gameState.getPacmanPosition()
+        jailPos = self.getJailPosition()
+        
+        # Get the current belief
+        # beliefs = self.beliefs
+        distribution = DiscreteDistribution()
+        
+        # Loop over all the positions to
+        for p in self.allPositions:
+            # Get the probability of noisy position given the actual (Q1)
+            probability = self.getObservationProb(observation, pacmanPos, p, jailPos)
+            
+            # Update the belief of that noisy position
+            distribution[p] = probability * self.beliefs[p]
+            
+        # Normalize
+        distribution.normalize()
+        
+        self.beliefs = distribution
 
     def elapseTime(self, gameState):
         """
