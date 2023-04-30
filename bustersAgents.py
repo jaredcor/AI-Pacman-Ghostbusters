@@ -152,4 +152,20 @@ class GreedyBustersAgent(BustersAgent):
         You may need to use self.distancer.getDistance(pacman next possible position, ghost position) at some point in the code
         """
         
+        # Get the location of all ghosts
+        ghostPositions = [dist.argMax() for dist in livingGhostPositionDistributions]
+        
+        def distanceFromPac(ghostPosition):
+            return self.distancer.getDistance(pacmanPosition, ghostPosition)
+        # Get the closest ghost position based on the distance from Pacman using key
+        closestGhostPos = min(ghostPositions, key=distanceFromPac)
+        
+        def distanceFromClosestGhost(action):
+            newPacmanPos = Actions.getSuccessor(pacmanPosition, action)
+            return self.distancer.getDistance(newPacmanPos, closestGhostPos)
+        
+        # Get the best legal action based on the distance from the closest ghost
+        bestAction = min(legal, key=distanceFromClosestGhost)
+        return bestAction
+        
         
