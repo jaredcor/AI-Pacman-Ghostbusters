@@ -322,7 +322,7 @@ class ExactInference(InferenceModule):
         jailPos = self.getJailPosition()
         
         # Get the current belief
-        # beliefs = self.beliefs
+        beliefs = self.beliefs
         distribution = DiscreteDistribution()
         
         # Loop over all the positions to
@@ -331,12 +331,10 @@ class ExactInference(InferenceModule):
             probability = self.getObservationProb(observation, pacmanPos, p, jailPos)
             
             # Update the belief of that noisy position
-            distribution[p] = probability * self.beliefs[p]
+            beliefs[p] *= probability
             
         # Normalize
-        distribution.normalize()
-        
-        self.beliefs = distribution
+        self.beliefs.normalize()
 
     def elapseTime(self, gameState):
         """
@@ -352,11 +350,28 @@ class ExactInference(InferenceModule):
         procedure:
         1- get the beliefs and new beliefs (from DiscreteDistribution())
         2- for all avialable positions
-            update the pprobability of trasitioning to new state (use getPositionDistribution)
+            update the probability of trasitioning to new state (use getPositionDistribution)
         3- then calculate the new beliefs
         4- set self.beliefs to the newest ones 
-        '''
-        raiseNotDefined()
+        '''        
+        # Get the beliefs and new beliefs
+        beliefs = self.beliefs
+        new_beliefs = DiscreteDistribution()
+        newPosDist = {}
+
+        # For all available positions
+        for oldPos in self.allPositions:
+            # Update the probability of transitioning to new state
+            newPosDist[oldPos] = self.getPositionDistribution(gameState, oldPos)
+
+        for newPos in self.allPositions:
+            # Calculate the new beliefs
+            new_beliefs[newPos] = sum(newPosDist[oldPos][newPos] * beliefs[oldPos]
+                for oldPos in beliefs)
+            
+        # Set self.beliefs to newest ones
+        self.beliefs = new_beliefs
+        
 
     def getBeliefDistribution(self):
         return self.beliefs
